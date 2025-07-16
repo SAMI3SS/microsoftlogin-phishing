@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify your account</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f3f2f1 url('/static/assets/captcha-background.png') no-repeat center center fixed;
+            background-size: cover;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* LOADING EKRANI */
+        #loading-screen {
+            position: fixed;
+            z-index: 9999;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw; height: 100vh;
+            background: url('/static/assets/captcha-background.png') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .dots {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 32px;
+        }
+        .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #3b8ac6;
+            opacity: 0.5;
+            animation: bounce 1s infinite;
+        }
+        .dot:nth-child(2) { animation-delay: 0.15s; }
+        .dot:nth-child(3) { animation-delay: 0.3s; }
+        .dot:nth-child(4) { animation-delay: 0.45s; }
+        .dot:nth-child(5) { animation-delay: 0.6s; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); opacity: 0.7; }
+            50% { transform: translateY(-8px); opacity: 1; }
+        }
+        .loading-profile {
+            position: absolute;
+            left: 18px;
+            bottom: 18px;
+            color: #fff;
+            font-size: 16px;
+            opacity: 0.8;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        /* CAPTCHA MODAL (senin mevcut kodun) */
+        .captcha-modal {
+            background: #fff;
+            border-radius: 0;
+            box-shadow: 0 4px 16px rgba(60,60,120,0.10), 0 1.5px 6px rgba(0,0,0,0.05);
+            width: 340px;
+            min-height: 440px;
+            padding: 48px 28px 18px 28px;
+            text-align: left;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            justify-content: flex-start;
+            opacity: 0;
+            transform: translateX(-40px);
+            transition: all 0.5s cubic-bezier(.4,2,.6,1);
+        }
+        .captcha-modal.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        .captcha-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .captcha-header img {
+            height: 24px;
+        }
+        .captcha-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #22223b;
+        }
+        .captcha-desc {
+            font-size: 15px;
+            color: #444;
+            margin-bottom: 22px;
+            line-height: 1.5;
+        }
+        .captcha-label {
+            font-size: 15px;
+            color: #222;
+            margin-bottom: 6px;
+            margin-top: 18px;
+        }
+        .captcha-links-top {
+            font-size: 13px;
+            margin-bottom: 28px;
+        }
+        .captcha-links-top a {
+            color: #0078d4;
+            text-decoration: none;
+            margin-right: 8px;
+        }
+        .captcha-links-top a:hover {
+            text-decoration: underline;
+        }
+        .captcha-img {
+            width: 100%;
+            height: 74px;
+            margin-bottom: 8px;
+            background: #f7f6fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            font-family: 'Courier New', Courier, monospace;
+            letter-spacing: 8px;
+            color: #5a4e8c;
+            border-radius: 0;
+            user-select: none;
+            border: 1px solid #d1cfe2;
+        }
+        .captcha-input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 16px;
+            border: 1px solid #bdbdbd;
+            border-radius: 0;
+            background: #fff;
+            color: #444;
+            font-weight: 400;
+            box-sizing: border-box;
+            transition: border 0.2s, color 0.2s;
+            margin-bottom: 10px;
+            height: 40px;
+        }
+        .captcha-input:focus {
+            border: 1px solid #888;
+            outline: none;
+            color: #222;
+        }
+        .captcha-btns {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 6px;
+        }
+        .captcha-btn {
+            min-width: 90px;
+            padding: 10px 0;
+            font-size: 16px;
+            border-radius: 0;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            background: #0078d4;
+            color: #fff;
+            transition: background 0.18s, color 0.18s, border 0.18s;
+            box-shadow: none;
+            outline: none;
+        }
+        .captcha-btn:hover, .captcha-btn:focus {
+            background: #005fa3;
+        }
+        .captcha-error {
+            color: #e81123;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+        .captcha-alert {
+            color: #e81123;
+            background: #fff0f3;
+            border: 1px solid #f5c2c7;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: 400;
+            margin-bottom: 14px;
+            padding: 8px 12px;
+            text-align: left;
+        }
+    </style>
+    <script>
+        function refreshCaptcha() {
+            var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            var code = '';
+            for (var i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+            document.getElementById('captcha-img').textContent = code;
+            document.getElementById('captcha_code').value = code;
+            document.getElementById('captcha_input').value = '';
+        }
+        window.onload = function() {
+            // LOADING EKRANI
+            setTimeout(function() {
+                document.getElementById('loading-screen').style.display = 'none';
+                var modal = document.getElementById('captcha-modal');
+                modal.style.display = 'flex';
+                setTimeout(function() {
+                    modal.classList.add('visible');
+                }, 10); // animasyon için küçük bir gecikme
+            }, 2000);
+            // CAPTCHA
+            refreshCaptcha();
+            document.getElementById('captcha-refresh').onclick = function(e) {
+                e.preventDefault();
+                refreshCaptcha();
+            };
+        };
+    </script>
+</head>
+<body>
+    <!-- LOADING Screen -->
+    <div id="loading-screen">
+        <div class="dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+        <div class="loading-profile">Loading Profile</div>
+    </div>
+    <!-- CAPTCHA MODAL -->
+    <div class="captcha-modal" id="captcha-modal" style="display:none;">
+        <div class="captcha-header">
+        </div>
+        <div class="captcha-alert">
+            Verification failed. Please solve the captcha and try again.
+        </div>
+        <div class="captcha-title">Verify Account</div>
+         <div class="captcha-desc">Before you can continue, we need to verify your account. This will not happen every time you continue, we promise.</div>
+        <div class="captcha-label">Enter the characters you see</div>
+        <div class="captcha-links-top">
+            <a href="#" id="captcha-refresh">New</a>
+        </div>
+        {% if error %}
+        <div class="captcha-error">{{ error }}</div>
+        {% endif %}
+        <form id="captcha-form" method="POST" autocomplete="off">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+            <div class="captcha-img" id="captcha-img"></div>
+            <input type="hidden" id="captcha_code" name="captcha_code" value="">
+            <input class="captcha-input" id="captcha_input" name="captcha_input" type="text" maxlength="6" required autocomplete="off">
+            <div class="captcha-btns">
+                <button type="submit" class="captcha-btn" id="captcha-submit">Verify</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html> 
